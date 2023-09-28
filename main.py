@@ -13,9 +13,10 @@ geojson_data = requests.get(geojson_url).json()
 def fetch_data(endpoint):
     url = f"http://apps.who.int/gho/athena/api/GHO/{endpoint}?format=csv"
     response = requests.get(url)
+    print(f'Fetched data for {endpoint}')
     csv_data = StringIO(response.content.decode('utf-8'))
     df = pd.read_csv(csv_data)
-    df = keep_most_recent_date(df).loc[:, ['COUNTRY', 'YEAR', 'Numeric']]
+    df = keep_most_recent_date(df).loc[:, ['COUNTRY', 'YEAR', 'Numeric','REGION']]
     return df
 
 def keep_most_recent_date(df):
@@ -41,7 +42,7 @@ app.layout = html.Div([
             'outline': 'none',
             'cursor': 'pointer',
             'marginLeft': 20
-        }),
+            }),
             html.Button("2. Regional Specifics", id="btn-section2", n_clicks=0, style={
                 'backgroundColor': '#008CBA',  # Blue color
                 'color': 'white',
@@ -53,6 +54,18 @@ app.layout = html.Div([
                 'cursor': 'pointer',
                 'marginLeft': 10
             }),
+            html.Button("3. An economic consequence", id="btn-section3", n_clicks=0, style={
+                'backgroundColor': '#008CBA',  # Blue color
+                'color': 'white',
+                'border': 'none',
+                'borderRadius': '8px',
+                'padding': '10px 20px',
+                'fontSize': '16px',
+                'outline': 'none',
+                'cursor': 'pointer',
+                'marginLeft': 10
+            }),
+
         ], style={'display': 'flex', 'alignItems': 'center'})
     ], style={'display': 'flex', 'alignItems': 'center', 'justifyContent': 'space-between', 'padding': '0 10px'}),
 
@@ -71,6 +84,7 @@ app.layout = html.Div([
                 {'label': 'Wasting prevalence among children under 5 years', 'value': 'NUTRITION_WH_2'}
             ],
             value='NUTRITION_ANT_HAZ_NE2',
+            searchable = False,
             clearable=False
         ),
         dcc.Graph(id='section1-graph', style={"width": "100%", "height": "70vh"}),
@@ -79,10 +93,23 @@ app.layout = html.Div([
 
     html.Div(id='section2', children=[
         html.H2("Section 2"),
-        # ... other content for section 2 ...
+        dcc.Dropdown(
+        id='dropdown2',
+        options=[
+            {'label': 'Stunting prevalence among children under 5 years', 'value': 'NUTRITION_ANT_HAZ_NE2'},
+            {'label': 'Overweight prevalence among children under 5 years', 'value': 'NUTRITION_ANT_WHZ_NE2'},
+            {'label': 'Wasting prevalence among children under 5 years', 'value': 'NUTRITION_WH_2'}
+        ],
+        value='NUTRITION_ANT_HAZ_NE2',
+        clearable=False
+        ),
+        dcc.Graph(id='barchart_section2', figure={}, style={"width": "50%", "height": "40vh"}),
+
     ], style={'marginTop': 50, 'display': 'none'}),
 
 ], style={"width": "100%", "padding": "0"})
+
+
 
 @app.callback(
     dash.dependencies.Output('section1-graph', 'figure'),
@@ -90,6 +117,7 @@ app.layout = html.Div([
 )
 def update_graph(data_type):
     df = fetch_data(data_type)
+    print('updating choloropeth')
     countries = df['COUNTRY']
     values = df['Numeric']
 
@@ -106,6 +134,24 @@ def update_graph(data_type):
                           coloraxis_colorbar_title="%"
                     )
     return fig
+
+
+@app.callback(
+    dash.dependencies.Output('barchart_section2', 'figure'),
+    [dash.dependencies.Input('dropdown2', 'value')]
+)
+def update_graph(data_type):
+    df = fetch_data(data_type)
+    # print('updating choloropeth 2')
+    # df = fetch_data(data_type)
+    print('updating barchart')
+    grouped_df = df.groupby('REGION')['Numeric'].mean().reset_index()
+    # fig = px.scatter(df, x="YEAR", y="Numeric")
+    print(grouped_df.head())
+    # Create bar chart based on the selected indicator
+    fig = px.bar(grouped_df, x='REGION', y='Numeric', title=f"Average {data_type} by Region", orientation='h')
+    return fig
+
 
 @app.callback(
     [dash.dependencies.Output('section1', 'style'),
