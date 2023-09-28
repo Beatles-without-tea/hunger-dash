@@ -27,9 +27,11 @@ app = dash.Dash(__name__)
 
 app.layout = html.Div([
     html.Div([
-        html.H1("Harnessing Data to Address World Challenges: Malnutrition Across the Globe", style={'fontSize': '24px'}),
+        html.H1("Harnessing Data to Address World Challenges: Malnutrition Across the Globe", 
+                style={'fontSize': '24px',
+                       'fontFamily': "'Courier New', monospace"}),
         html.Div([
-            html.Button("A  Global Issue", id="btn-section1", n_clicks=0, style={
+            html.Button("1. A  Global Issue", id="btn-section1", n_clicks=0, style={
             'backgroundColor': '#4CAF50',  # Green color
             'color': 'white',              # White text
             'border': 'none',
@@ -40,7 +42,7 @@ app.layout = html.Div([
             'cursor': 'pointer',
             'marginLeft': 20
         }),
-            html.Button("Section 2", id="btn-section2", n_clicks=0, style={
+            html.Button("2. Regional Specifics", id="btn-section2", n_clicks=0, style={
                 'backgroundColor': '#008CBA',  # Blue color
                 'color': 'white',
                 'border': 'none',
@@ -61,7 +63,6 @@ app.layout = html.Div([
                 susceptibility to infections. Conversely, an increasing number of children in this age bracket are overweight,
                 placing them at risk for chronic conditions such as diabetes, cardiovascular diseases, and other obesity-related 
                complications later in life. """),
-        html.H4("Prevalence among children under 5 years (% weight-for-height +-2 SD), survey-based estimates"),
         dcc.Dropdown(
             id='data-selector',
             options=[
@@ -72,7 +73,8 @@ app.layout = html.Div([
             value='NUTRITION_ANT_HAZ_NE2',
             clearable=False
         ),
-        dcc.Graph(id='section1-graph', style={"width": "100%", "height": "80vh"})
+        dcc.Graph(id='section1-graph', style={"width": "100%", "height": "70vh"}),
+        html.H4("Prevalence among children under 5 years (% weight-for-height +-2 SD), survey-based estimates")
     ], style={"width": "100%", "padding": "0"}),
 
     html.Div(id='section2', children=[
@@ -100,7 +102,9 @@ def update_graph(data_type):
                                opacity=0.5,
                                featureidkey="properties.ISO_A3"
                                )
-    fig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
+    fig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0}, 
+                          coloraxis_colorbar_title="%"
+                    )
     return fig
 
 @app.callback(
