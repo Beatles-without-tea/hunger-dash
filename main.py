@@ -147,12 +147,12 @@ def update_graph(data_type):
     print('updating barchart')
     grouped_df = df.groupby('REGION')['Numeric'].mean().reset_index()
     # fig = px.scatter(df, x="YEAR", y="Numeric")
-    print(grouped_df.head())
+    # print(grouped_df.head())
     # Create bar chart based on the selected indicator
-    fig = px.bar(grouped_df, x='REGION', y='Numeric', title=f"Average {data_type} by Region", orientation='h')
+    fig = px.bar(grouped_df, y='REGION', x='Numeric', orientation='h', labels = {"Numeric": "%"})
     return fig
 
-
+# TODO yearly values for worse affected region by metric 
 @app.callback(
     [dash.dependencies.Output('section1', 'style'),
      dash.dependencies.Output('section2', 'style')],
@@ -171,6 +171,6 @@ def toggle_sections(btn1, btn2):
             return {'display': 'none'}, {'display': 'block'}
 
 if __name__ == '__main__':
-    app.run_server(debug=True)
+    app.run_server(debug=True,  host='0.0.0.0', port=8050)
 
 
