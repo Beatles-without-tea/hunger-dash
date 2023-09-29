@@ -85,7 +85,8 @@ app.layout = html.Div([
 
     html.Div(id='section1', children=[
 
-        html.H4(["Malnourishment is a ", html.Span("global", style={"color": "red"}), " problem. Although, its forms vary by region"]),
+        html.H4(["Malnourishment is a ", html.Span("global", style={"color": "red"}), " problem. Although, its forms vary by region"],
+                style= {'padding-left':'1%'}),
         dcc.Dropdown(
             id='data-selector',
             options=[
@@ -192,6 +193,109 @@ def update_graph(data_type):
 
     return fig, fig2,fig3
   
+# # Defining callbacks for each button
+# for i in range(1,4):
+#     @app.callback(
+#         dash.dependencies.Output(f"btn-section{i}", "style"),
+#         dash.dependencies.Input(f"btn-section{i}", "n_clicks")
+#     )
+#     def update_button_color(n, btn_id=i):
+#         if n % 2 == 0:
+#             return {
+#                 'backgroundColor': '#008CBA',  # Blue color
+#                 'color': 'white',
+#                 'border': 'none',
+#                 'borderRadius': '8px',
+#                 'padding': '10px 20px',
+#                 'fontSize': '16px',
+#                 'outline': 'none',
+#                 'cursor': 'pointer',
+#                 'marginLeft': 10
+#             }
+
+#         else:
+#             return {
+#                 'backgroundColor': 'red', 
+#                 'color': 'white',
+#                 'border': 'none',
+#                 'borderRadius': '8px',
+#                 'padding': '10px 20px',
+#                 'fontSize': '16px',
+#                 'outline': 'none',
+#                 'cursor': 'pointer',
+#                 'marginLeft': 10
+#             }
+
+@app.callback(
+    [dash.dependencies.Output(f"btn-section{i}", "style") for i in range(1,5)],  # Outputs for each button
+    [dash.dependencies.Input(f"btn-section{i}", "n_clicks") for i in range(1,5)]  # Inputs for each button
+)
+def update_button_colors(*args):
+    # 'args' will be a tuple of click counts for the buttons in the order btn-0, btn-1, btn-2
+
+    # max_clicks = max(args)
+    # if max_clicks == 0:
+    #     return [{
+    #             'backgroundColor': '#008CBA',  # Blue color
+    #             'color': 'white',
+    #             'border': 'none',
+    #             'borderRadius': '8px',
+    #             'padding': '10px 20px',
+    #             'fontSize': '16px',
+    #             'outline': 'none',
+    #             'cursor': 'pointer',
+    #             'marginLeft': 10
+    #         } for _ in range(1,4)]
+
+    # Find which button was most recently clicked
+    ctx = dash.callback_context
+    if not ctx.triggered:
+        print('no trigger')
+        # No button has been clicked yet
+        return [{
+                'backgroundColor': f'{color}',  # Blue color
+                'color': 'white',
+                'border': 'none',
+                'borderRadius': '8px',
+                'padding': '10px 20px',
+                'fontSize': '16px',
+                'outline': 'none',
+                'cursor': 'pointer',
+                'marginLeft': 10
+            } for color in ['red','#008CBA','#008CBA','#008CBA']]
+    print(ctx.triggered)
+    btn_id = ctx.triggered[0]['prop_id'].split('.')[0]
+    clicked_btn_index = int(btn_id.split('-')[-1][-1])
+    print(clicked_btn_index)
+    # Generate the style for each button
+    styles = []
+    for i in range(1,5):
+        if i == clicked_btn_index:
+            styles.append({
+            'backgroundColor': 'red', 
+            'color': 'white',
+            'border': 'none',
+            'borderRadius': '8px',
+            'padding': '10px 20px',
+            'fontSize': '16px',
+            'outline': 'none',
+            'cursor': 'pointer',
+            'marginLeft': 10
+           })
+        else:
+            styles.append({
+                'backgroundColor': '#008CBA',  # Blue color
+                'color': 'white',
+                'border': 'none',
+                'borderRadius': '8px',
+                'padding': '10px 20px',
+                'fontSize': '16px',
+                'outline': 'none',
+                'cursor': 'pointer',
+                'marginLeft': 10
+            })  # Default color for other buttons
+
+    return styles
 
 
 @app.callback(
