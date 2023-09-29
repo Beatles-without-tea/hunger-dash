@@ -133,6 +133,12 @@ app.layout = html.Div([
         html.H3("Economic realities",
                 style= {'padding-left':'1%'}),
     ]),
+    #section 4
+    html.Div(id='section4', children=[
+        html.H3("future",
+                style= {'padding-left':'1%'}),
+    ])
+
 ], style={"width": "100%", "padding": "0"})
 
 
@@ -267,25 +273,29 @@ def update_button_colors(*args):
     [dash.dependencies.Output('section1', 'style'),
      dash.dependencies.Output('section2', 'style'),
      dash.dependencies.Output('section3', 'style'),
+     dash.dependencies.Output('section4', 'style'),
      ],
     [dash.dependencies.Input('btn-section1', 'n_clicks'),
      dash.dependencies.Input('btn-section2', 'n_clicks'),
      dash.dependencies.Input('btn-section3', 'n_clicks'),
+     dash.dependencies.Input('btn-section4', 'n_clicks'),
 
      ]
 )
-def toggle_sections(btn1, btn2, btn3):
+def toggle_sections(btn1, btn2, btn3, btn4):
     ctx = dash.callback_context
     if not ctx.triggered:
-        return dict(), {'display': 'none'} ,{'display':'none'}
+        return dict(), {'display': 'none'} ,{'display':'none'}  , {'display':'none'}
     else:
         btn_id = ctx.triggered[0]['prop_id'].split('.')[0]
         if btn_id == 'btn-section1':
-            return {'display': 'block'}, {'display': 'none'} , {'display':'none'}
+            return {'display': 'block'}, {'display': 'none'} , {'display':'none'} , {'display':'none'}
         elif btn_id == 'btn-section2':
-            return {'display': 'none'}, {'display': 'block'} , {'display':'none'}
+            return {'display': 'none'}, {'display': 'block'} , {'display':'none'} , {'display':'none'}
         elif btn_id == 'btn-section3':
-            return {'display': 'none'},  {'display':'none'},  {'display': 'block'} 
+            return {'display': 'none'},  {'display':'none'},  {'display': 'block'}  , {'display':'none'}
+        elif btn_id == 'btn-section4':
+            return {'display': 'none'},  {'display':'none'}, {'display':'none'} , {'display': 'block'} 
 
 
 
