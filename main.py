@@ -90,7 +90,7 @@ app.layout = html.Div([
         dcc.Graph(id='section1-graph', style={"width": "100%", "height": "70vh"}),
         html.H4("Prevalence among children under 5 years (% weight-for-height +-2 SD), survey-based estimates")
     ], style={"width": "100%", "padding": "0"}),
-
+    # section 2
     html.Div(id='section2', children=[
         html.H2("Section 2"),
         dcc.Dropdown(
@@ -103,7 +103,11 @@ app.layout = html.Div([
         value='NUTRITION_ANT_HAZ_NE2',
         clearable=False
         ),
-        dcc.Graph(id='barchart_section2', figure={}, style={"width": "50%", "height": "40vh"}),
+        # put graphs side by side
+        html.Div([
+            dcc.Graph(id='barchart_section2', figure={}, style={"width": "50%", "height": "40vh"}),
+            dcc.Graph(id='plot_section2', figure={}, style={"width": "50%", "height": "40vh"}),
+        ], style={"display": "flex"})
 
     ], style={'marginTop': 50, 'display': 'none'}),
 
@@ -135,22 +139,37 @@ def update_graph(data_type):
                     )
     return fig
 
+labels_dict = {"WPR":"Western Pacific",
+               "SEAR":"South-East Asia",
+               "EUR":"Europe",
+               "EMR":"Eastern Mediterranean",
+               "AMR":"Americas",
+               "AFR":"Africa"
+               }
+
 
 @app.callback(
-    dash.dependencies.Output('barchart_section2', 'figure'),
-    [dash.dependencies.Input('dropdown2', 'value')]
-)
+    [dash.dependencies.Output('barchart_section2', 'figure'),
+     dash.dependencies.Output('plot_section2', 'figure')
+    ],
+    [dash.dependencies.Input('dropdown2', 'value')],
+    prevent_initial_call=True
+    )
 def update_graph(data_type):
     df = fetch_data(data_type)
-    # print('updating choloropeth 2')
-    # df = fetch_data(data_type)
     print('updating barchart')
     grouped_df = df.groupby('REGION')['Numeric'].mean().reset_index()
-    # fig = px.scatter(df, x="YEAR", y="Numeric")
-    # print(grouped_df.head())
-    # Create bar chart based on the selected indicator
-    fig = px.bar(grouped_df, y='REGION', x='Numeric', orientation='h', labels = {"Numeric": "%"})
-    return fig
+    fig = px.bar(grouped_df, y='REGION', x='Numeric', orientation='h', labels = { "Numeric": "%", "REGION":'Region'})
+    fig.update_yaxes(tickvals=list(labels_dict.keys()), ticktext= list(labels_dict.values()))
+
+    max_index = grouped_df['Numeric'].idxmax()
+    most_affected_region = grouped_df.loc[max_index,'REGION']
+    df['YEAR'] = df['YEAR'].astype(int)
+    df = df[df['REGION'] == most_affected_region].groupby('YEAR')['Numeric'].mean().reset_index(drop=False).sort_values(by="YEAR")
+    fig2 = px.scatter(df, x="YEAR", y="Numeric", title=f'{labels_dict[most_affected_region]} Over time', labels = {})
+    return fig, fig2
+  
+
 
 # TODO yearly values for worse affected region by metric 
 @app.callback(
