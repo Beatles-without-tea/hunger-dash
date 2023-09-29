@@ -11,12 +11,17 @@ from iso3_dict import country_codes
 geojson_url = "https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson"
 geojson_data = requests.get(geojson_url).json()
 
+
+
 def fetch_data(endpoint):
     url = f"http://apps.who.int/gho/athena/api/GHO/{endpoint}?format=csv"
     response = requests.get(url)
     print(f'Fetched data for {endpoint}')
     csv_data = StringIO(response.content.decode('utf-8'))
     df = pd.read_csv(csv_data)
+    return df
+
+def format_malnutrition_data(df):
     df = keep_most_recent_date(df).loc[:, ['COUNTRY', 'YEAR', 'Numeric','REGION']]
     return df
 
@@ -132,6 +137,22 @@ app.layout = html.Div([
     html.Div(id='section3', children=[
         html.H3("Economic realities",
                 style= {'padding-left':'1%'}),
+        dcc.Dropdown(
+        id='dropdown3',
+        options=[
+            {'label': 'Stunting prevalence among children under 5 years', 'value': 'NUTRITION_ANT_HAZ_NE2'},
+            {'label': 'Overweight prevalence among children under 5 years', 'value': 'NUTRITION_ANT_WHZ_NE2'},
+            {'label': 'Wasting prevalence among children under 5 years', 'value': 'NUTRITION_WH_2'}
+        ],
+        value='NUTRITION_ANT_HAZ_NE2',
+        clearable=False
+        ),
+        #row 1
+        html.Div([
+            dcc.Graph(id='correlations_section3', figure={}, style={"width": "50%", "height": "40vh"}),
+            # dcc.Graph(id='plot_section2', figure={}, style={"width": "50%", "height": "40vh"}),
+        # put graphs side by side
+        ], style={"display": "flex"}), 
     ]),
     #section 4
     html.Div(id='section4', children=[
@@ -149,6 +170,7 @@ app.layout = html.Div([
 )
 def update_graph(data_type):
     df = fetch_data(data_type)
+    df = format_malnutrition_data(df)
     print('updating choloropeth')
     countries = df['COUNTRY']
     values = df['Numeric']
@@ -189,7 +211,7 @@ labels_dict = {"WPR":"Western Pacific",
 def update_graph(data_type):
     df = fetch_data(data_type)
     print('updating barchart')
-    recent_df = keep_most_recent_date(df)
+    recent_df = format_malnutrition_data(df)
     grouped_df = recent_df.groupby('REGION')['Numeric'].mean().reset_index().sort_values(by='Numeric', ascending=False)
     fig = px.bar(grouped_df, y='REGION', x='Numeric', orientation='h', labels = { "Numeric": "%", "REGION":''})
     fig.update_yaxes(tickvals=list(labels_dict.keys()), ticktext= list(labels_dict.values()))
@@ -200,7 +222,8 @@ def update_graph(data_type):
     df_region = df[df['REGION'] == most_affected_region].groupby('YEAR')['Numeric'].mean().reset_index(drop=False).sort_values(by="YEAR")
     fig2 = px.line(df_region, x="YEAR", y="Numeric", title=f'{labels_dict[most_affected_region]} Over time', labels = {'Numeric':'%',"YEAR":'Year'})
     
-    fig3 = px.box(recent_df, x='REGION' ,y="Numeric")
+    fig3 = px.box(recent_df, x='REGION' ,y="Numeric", labels = { "Numeric": "%", "REGION":''})
+    fig3.update_xaxes(tickvals=list(labels_dict.keys()), ticktext= list(labels_dict.values()))
 
 
     df_country = recent_df.groupby('COUNTRY')['Numeric'].mean().reset_index().sort_values(by='Numeric', ascending=False).iloc[:5,:]
@@ -209,7 +232,28 @@ def update_graph(data_type):
     fig4.update_yaxes(tickvals=list(country_codes.keys()), ticktext= list(country_codes.values()))
 
     return fig, fig2,fig3, fig4
-  
+
+
+
+
+@app.callback(
+    dash.dependencies.Output('correlations_section3', 'figure'),
+    [dash.dependencies.Input('data-selector3', 'value')]
+)
+def update_graph(data_type):
+    gdp_spending = fetch_data('GHED_GGHE-DGDP_SHA2011')
+    recent_gdp_spending = format_malnutrition_data(gdp_spending)
+
+    malnutrition_data = fetch_data(data_type)
+    recent_malnutrition_data = format_malnutrition_data(malnutrition_data)
+
+    # needs to be merged 
+    # select all values by REGION and plot y= malnutrion (data_type) and x = gdp spending, then draw line through it
+
+    print('updating 4 g1')
+    
+    fig = 
+    return fig
 
 @app.callback(
     [dash.dependencies.Output(f"btn-section{i}", "style") for i in range(1,5)],  # Outputs for each button
@@ -268,6 +312,8 @@ def update_button_colors(*args):
 
     return styles
 
+# correlation between Domestic general government health expenditure (GGHE-D) as percentage of gross domestic product (GDP) (%)
+# and malnutrition 
 
 @app.callback(
     [dash.dependencies.Output('section1', 'style'),
