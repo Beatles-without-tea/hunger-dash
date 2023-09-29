@@ -6,6 +6,7 @@ from dash import html
 import plotly.express as px
 from io import StringIO
 import plotly.graph_objs as go
+from iso3_dict import country_codes
 
 geojson_url = "https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson"
 geojson_data = requests.get(geojson_url).json()
@@ -65,6 +66,17 @@ app.layout = html.Div([
                 'cursor': 'pointer',
                 'marginLeft': 10
             }),
+            html.Button("4. Future", id="btn-section4", n_clicks=0, style={
+                'backgroundColor': '#008CBA',  # Blue color
+                'color': 'white',
+                'border': 'none',
+                'borderRadius': '8px',
+                'padding': '10px 20px',
+                'fontSize': '16px',
+                'outline': 'none',
+                'cursor': 'pointer',
+                'marginLeft': 10
+            }),
 
         ], style={'display': 'flex', 'alignItems': 'center'})
     ], style={'display': 'flex', 'alignItems': 'center', 'justifyContent': 'space-between', 'padding': '0 10px'}),
@@ -103,10 +115,15 @@ app.layout = html.Div([
         value='NUTRITION_ANT_HAZ_NE2',
         clearable=False
         ),
-        # put graphs side by side
+        #row 1
         html.Div([
             dcc.Graph(id='barchart_section2', figure={}, style={"width": "50%", "height": "40vh"}),
             dcc.Graph(id='plot_section2', figure={}, style={"width": "50%", "height": "40vh"}),
+        # put graphs side by side
+        ], style={"display": "flex"}), 
+        # row 2
+        html.Div([
+            dcc.Graph(id='barchart2_section2', figure={}, style={"width": "50%", "height": "40vh"}),
         ], style={"display": "flex"})
 
     ], style={'marginTop': 50, 'display': 'none'}),
@@ -150,7 +167,8 @@ labels_dict = {"WPR":"Western Pacific",
 
 @app.callback(
     [dash.dependencies.Output('barchart_section2', 'figure'),
-     dash.dependencies.Output('plot_section2', 'figure')
+     dash.dependencies.Output('plot_section2', 'figure'),
+     dash.dependencies.Output('barchart2_section2', 'figure')
     ],
     [dash.dependencies.Input('dropdown2', 'value')],
     prevent_initial_call=True
@@ -158,20 +176,25 @@ labels_dict = {"WPR":"Western Pacific",
 def update_graph(data_type):
     df = fetch_data(data_type)
     print('updating barchart')
-    grouped_df = df.groupby('REGION')['Numeric'].mean().reset_index()
-    fig = px.bar(grouped_df, y='REGION', x='Numeric', orientation='h', labels = { "Numeric": "%", "REGION":'Region'})
+    grouped_df = df.groupby('REGION')['Numeric'].mean().reset_index().sort_values(by='Numeric', ascending=False)
+    fig = px.bar(grouped_df, y='REGION', x='Numeric', orientation='h', labels = { "Numeric": "%", "REGION":''})
     fig.update_yaxes(tickvals=list(labels_dict.keys()), ticktext= list(labels_dict.values()))
 
     max_index = grouped_df['Numeric'].idxmax()
     most_affected_region = grouped_df.loc[max_index,'REGION']
     df['YEAR'] = df['YEAR'].astype(int)
-    df = df[df['REGION'] == most_affected_region].groupby('YEAR')['Numeric'].mean().reset_index(drop=False).sort_values(by="YEAR")
-    fig2 = px.scatter(df, x="YEAR", y="Numeric", title=f'{labels_dict[most_affected_region]} Over time', labels = {})
-    return fig, fig2
+    df_region = df[df['REGION'] == most_affected_region].groupby('YEAR')['Numeric'].mean().reset_index(drop=False).sort_values(by="YEAR")
+    fig2 = px.line(df_region, x="YEAR", y="Numeric", title=f'{labels_dict[most_affected_region]} Over time', labels = {'Numeric':'%',"YEAR":'Year'})
+    
+    df_country = df.groupby('COUNTRY')['Numeric'].mean().reset_index().sort_values(by='Numeric', ascending=False).iloc[:5,:]
+    fig3 = px.bar(df_country, y='COUNTRY', x='Numeric', orientation='h', labels = { "Numeric": "%", "COUNTRY":''})
+    # country_codes
+    fig3.update_yaxes(tickvals=list(country_codes.keys()), ticktext= list(country_codes.values()))
+
+    return fig, fig2,fig3
   
 
 
-# TODO yearly values for worse affected region by metric 
 @app.callback(
     [dash.dependencies.Output('section1', 'style'),
      dash.dependencies.Output('section2', 'style')],
