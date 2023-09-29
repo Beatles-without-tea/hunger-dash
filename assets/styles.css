@@ -1,0 +1,12 @@
+body {
+    margin: 0;
+    padding: 0;
+}
+
+/* If you are using Dash's default styles, 
+   you might also want to reset the default styles for the `dash-container` */
+
+.dash-container {
+    margin: 0;
+    padding: 0;
+}

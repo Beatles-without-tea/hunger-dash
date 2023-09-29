@@ -29,9 +29,9 @@ app = dash.Dash(__name__)
 
 app.layout = html.Div([
     html.Div([
-        html.H1("Harnessing Data to Address World Challenges: Malnutrition Across the Globe", 
+        html.H1(["Harnessing Data to Address World Challenges:", html.Br() ,"Malnutrition Across the Globe"], 
                 style={'fontSize': '24px',
-                       'fontFamily': "'Courier New', monospace"}),
+                       'fontFamily': "'Courier New', monospace", 'color':'white'}),
         html.Div([
             html.Button("1. A  Global Issue", id="btn-section1", n_clicks=0, style={
             'backgroundColor': '#4CAF50',  # Green color
@@ -79,15 +79,13 @@ app.layout = html.Div([
             }),
 
         ], style={'display': 'flex', 'alignItems': 'center'})
-    ], style={'display': 'flex', 'alignItems': 'center', 'justifyContent': 'space-between', 'padding': '0 10px'}),
+    ], style={'display': 'flex', 'alignItems': 'center', 'justifyContent': 'space-between', 'padding': '0 10px', 'background-color':'black'}),
 
 
 
     html.Div(id='section1', children=[
-        html.P("""In children under the age of 5, undernutrition manifests in stunted growth, wasting, and heightened
-                susceptibility to infections. Conversely, an increasing number of children in this age bracket are overweight,
-                placing them at risk for chronic conditions such as diabetes, cardiovascular diseases, and other obesity-related 
-               complications later in life. """),
+
+        html.H4(["Malnourishment is a ", html.Span("global", style={"color": "red"}), " problem. Although, its forms vary by region"]),
         dcc.Dropdown(
             id='data-selector',
             options=[
@@ -176,7 +174,8 @@ labels_dict = {"WPR":"Western Pacific",
 def update_graph(data_type):
     df = fetch_data(data_type)
     print('updating barchart')
-    grouped_df = df.groupby('REGION')['Numeric'].mean().reset_index().sort_values(by='Numeric', ascending=False)
+    recent_df = keep_most_recent_date(df)
+    grouped_df = recent_df.groupby('REGION')['Numeric'].mean().reset_index().sort_values(by='Numeric', ascending=False)
     fig = px.bar(grouped_df, y='REGION', x='Numeric', orientation='h', labels = { "Numeric": "%", "REGION":''})
     fig.update_yaxes(tickvals=list(labels_dict.keys()), ticktext= list(labels_dict.values()))
 
@@ -186,7 +185,7 @@ def update_graph(data_type):
     df_region = df[df['REGION'] == most_affected_region].groupby('YEAR')['Numeric'].mean().reset_index(drop=False).sort_values(by="YEAR")
     fig2 = px.line(df_region, x="YEAR", y="Numeric", title=f'{labels_dict[most_affected_region]} Over time', labels = {'Numeric':'%',"YEAR":'Year'})
     
-    df_country = df.groupby('COUNTRY')['Numeric'].mean().reset_index().sort_values(by='Numeric', ascending=False).iloc[:5,:]
+    df_country = recent_df.groupby('COUNTRY')['Numeric'].mean().reset_index().sort_values(by='Numeric', ascending=False).iloc[:5,:]
     fig3 = px.bar(df_country, y='COUNTRY', x='Numeric', orientation='h', labels = { "Numeric": "%", "COUNTRY":''})
     # country_codes
     fig3.update_yaxes(tickvals=list(country_codes.keys()), ticktext= list(country_codes.values()))
