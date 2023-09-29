@@ -85,7 +85,7 @@ app.layout = html.Div([
 
     html.Div(id='section1', children=[
 
-        html.H4(["Malnourishment is a ", html.Span("global", style={"color": "red"}), " problem. Although, its forms vary by region"],
+        html.H3(["Malnourishment is a ", html.Span("global", style={"color": "red"}), " problem. Although, its forms vary by region"],
                 style= {'padding-left':'1%'}),
         dcc.Dropdown(
             id='data-selector',
@@ -103,7 +103,8 @@ app.layout = html.Div([
     ], style={"width": "100%", "padding": "0"}),
     # section 2
     html.Div(id='section2', children=[
-        html.H2("Section 2"),
+        html.H3("Regions vary in the types of malnutrition they predominantly face, though exceptions are frequent",
+                 style= {'padding-left':'1%'}),
         dcc.Dropdown(
         id='dropdown2',
         options=[
@@ -122,11 +123,16 @@ app.layout = html.Div([
         ], style={"display": "flex"}), 
         # row 2
         html.Div([
+            dcc.Graph(id='boxplot_section2', figure={}, style={"width": "50%", "height": "40vh"}),
             dcc.Graph(id='barchart2_section2', figure={}, style={"width": "50%", "height": "40vh"}),
         ], style={"display": "flex"})
 
     ], style={'marginTop': 50, 'display': 'none'}),
-
+    #section 3
+    html.Div(id='section3', children=[
+        html.H3("Economic realities",
+                style= {'padding-left':'1%'}),
+    ]),
 ], style={"width": "100%", "padding": "0"})
 
 
@@ -167,10 +173,12 @@ labels_dict = {"WPR":"Western Pacific",
 @app.callback(
     [dash.dependencies.Output('barchart_section2', 'figure'),
      dash.dependencies.Output('plot_section2', 'figure'),
-     dash.dependencies.Output('barchart2_section2', 'figure')
+     dash.dependencies.Output('boxplot_section2', 'figure'),
+     dash.dependencies.Output('barchart2_section2', 'figure'),
+
     ],
     [dash.dependencies.Input('dropdown2', 'value')],
-    prevent_initial_call=True
+    # prevent_initial_call=True
     )
 def update_graph(data_type):
     df = fetch_data(data_type)
@@ -186,45 +194,16 @@ def update_graph(data_type):
     df_region = df[df['REGION'] == most_affected_region].groupby('YEAR')['Numeric'].mean().reset_index(drop=False).sort_values(by="YEAR")
     fig2 = px.line(df_region, x="YEAR", y="Numeric", title=f'{labels_dict[most_affected_region]} Over time', labels = {'Numeric':'%',"YEAR":'Year'})
     
+    fig3 = px.box(recent_df, x='REGION' ,y="Numeric")
+
+
     df_country = recent_df.groupby('COUNTRY')['Numeric'].mean().reset_index().sort_values(by='Numeric', ascending=False).iloc[:5,:]
-    fig3 = px.bar(df_country, y='COUNTRY', x='Numeric', orientation='h', labels = { "Numeric": "%", "COUNTRY":''})
+    fig4 = px.bar(df_country, y='COUNTRY', x='Numeric', orientation='h', labels = { "Numeric": "%", "COUNTRY":''})
     # country_codes
-    fig3.update_yaxes(tickvals=list(country_codes.keys()), ticktext= list(country_codes.values()))
+    fig4.update_yaxes(tickvals=list(country_codes.keys()), ticktext= list(country_codes.values()))
 
-    return fig, fig2,fig3
+    return fig, fig2,fig3, fig4
   
-# # Defining callbacks for each button
-# for i in range(1,4):
-#     @app.callback(
-#         dash.dependencies.Output(f"btn-section{i}", "style"),
-#         dash.dependencies.Input(f"btn-section{i}", "n_clicks")
-#     )
-#     def update_button_color(n, btn_id=i):
-#         if n % 2 == 0:
-#             return {
-#                 'backgroundColor': '#008CBA',  # Blue color
-#                 'color': 'white',
-#                 'border': 'none',
-#                 'borderRadius': '8px',
-#                 'padding': '10px 20px',
-#                 'fontSize': '16px',
-#                 'outline': 'none',
-#                 'cursor': 'pointer',
-#                 'marginLeft': 10
-#             }
-
-#         else:
-#             return {
-#                 'backgroundColor': 'red', 
-#                 'color': 'white',
-#                 'border': 'none',
-#                 'borderRadius': '8px',
-#                 'padding': '10px 20px',
-#                 'fontSize': '16px',
-#                 'outline': 'none',
-#                 'cursor': 'pointer',
-#                 'marginLeft': 10
-#             }
 
 @app.callback(
     [dash.dependencies.Output(f"btn-section{i}", "style") for i in range(1,5)],  # Outputs for each button
@@ -232,20 +211,6 @@ def update_graph(data_type):
 )
 def update_button_colors(*args):
     # 'args' will be a tuple of click counts for the buttons in the order btn-0, btn-1, btn-2
-
-    # max_clicks = max(args)
-    # if max_clicks == 0:
-    #     return [{
-    #             'backgroundColor': '#008CBA',  # Blue color
-    #             'color': 'white',
-    #             'border': 'none',
-    #             'borderRadius': '8px',
-    #             'padding': '10px 20px',
-    #             'fontSize': '16px',
-    #             'outline': 'none',
-    #             'cursor': 'pointer',
-    #             'marginLeft': 10
-    #         } for _ in range(1,4)]
 
     # Find which button was most recently clicked
     ctx = dash.callback_context
@@ -300,20 +265,29 @@ def update_button_colors(*args):
 
 @app.callback(
     [dash.dependencies.Output('section1', 'style'),
-     dash.dependencies.Output('section2', 'style')],
+     dash.dependencies.Output('section2', 'style'),
+     dash.dependencies.Output('section3', 'style'),
+     ],
     [dash.dependencies.Input('btn-section1', 'n_clicks'),
-     dash.dependencies.Input('btn-section2', 'n_clicks')]
+     dash.dependencies.Input('btn-section2', 'n_clicks'),
+     dash.dependencies.Input('btn-section3', 'n_clicks'),
+
+     ]
 )
-def toggle_sections(btn1, btn2):
+def toggle_sections(btn1, btn2, btn3):
     ctx = dash.callback_context
     if not ctx.triggered:
-        return dict(), {'display': 'none'}
+        return dict(), {'display': 'none'} ,{'display':'none'}
     else:
         btn_id = ctx.triggered[0]['prop_id'].split('.')[0]
         if btn_id == 'btn-section1':
-            return {'display': 'block'}, {'display': 'none'}
+            return {'display': 'block'}, {'display': 'none'} , {'display':'none'}
         elif btn_id == 'btn-section2':
-            return {'display': 'none'}, {'display': 'block'}
+            return {'display': 'none'}, {'display': 'block'} , {'display':'none'}
+        elif btn_id == 'btn-section3':
+            return {'display': 'none'},  {'display':'none'},  {'display': 'block'} 
+
+
 
 if __name__ == '__main__':
     app.run_server(debug=True,  host='0.0.0.0', port=8050)
