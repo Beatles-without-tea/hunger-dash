@@ -62,7 +62,7 @@ app.layout = html.Div([
                 'cursor': 'pointer',
                 'marginLeft': 10
             }),
-            html.Button("3. An economic consequence", id="btn-section3", n_clicks=0, style={
+            html.Button("3. Economic Patterns", id="btn-section3", n_clicks=0, style={
                 'backgroundColor': '#008CBA',  # Blue color
                 'color': 'white',
                 'border': 'none',
@@ -110,7 +110,7 @@ app.layout = html.Div([
     ], style={"width": "100%", "padding": "0"}),
     # section 2
     html.Div(id='section2', children=[
-        html.H3("Regions vary in the types of malnutrition they predominantly face, though exceptions are frequent",
+        html.H3("Regions vary in the types of malnutrition they predominantly face",
                  style= {'padding-left':'1%'}),
         dcc.Dropdown(
         id='dropdown2',
@@ -137,7 +137,7 @@ app.layout = html.Div([
     ], style={'marginTop': 50, 'display': 'none'}),
     #section 3
     html.Div(id='section3', children=[
-        html.H3("Economic realities",
+        html.H3("Higher investment doesn't always equate to better outcomes",
                 style= {'padding-left':'1%'}),
         dcc.Dropdown(
         id='dropdown3',
@@ -273,7 +273,7 @@ def update_graph(data_type):
                  color='Region',
                  hover_data=['COUNTRY'],
                  trendline='ols',
-                 title="Different trends in different regions",
+                 title="Trends by region",
                  labels={'Malnutrition': '%', 
                          'GDP': 'Domestic general government health expenditure (GGHE-D) as percentage of gross domestic product (GDP) (%)',
                          })
@@ -322,7 +322,9 @@ def update_graph(data_type):
         hoverongaps=False
     ))
 
-    fig3.update_layout(title='Heatmap of Malnutrition vs GDP Per Capita USD')
+    fig3.update_layout(title='Density Heatmap of Malnutrition vs GDP Per Capita USD', 
+                       xaxis_title='Malnutrition %',
+                       yaxis_title='GDP Per Capita USD')
 
     return fig3, fig, fig2
 
