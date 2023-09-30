@@ -1,3 +1,4 @@
 *.xlsx
 *.xlsx#
-*.csv
+# *.csv
+/home/max/Desktop/hunger-dash/local_data/.~lock.GDP_22_per_capita_usd.csv#

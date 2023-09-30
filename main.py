@@ -238,21 +238,38 @@ def update_graph(data_type):
 
 @app.callback(
     dash.dependencies.Output('correlations_section3', 'figure'),
-    [dash.dependencies.Input('data-selector3', 'value')]
+    [dash.dependencies.Input('dropdown3', 'value')]
 )
 def update_graph(data_type):
     gdp_spending = fetch_data('GHED_GGHE-DGDP_SHA2011')
     recent_gdp_spending = format_malnutrition_data(gdp_spending)
 
+
     malnutrition_data = fetch_data(data_type)
     recent_malnutrition_data = format_malnutrition_data(malnutrition_data)
+ 
+    recent_malnutrition_data = recent_malnutrition_data.rename(columns = {'Numeric':'Malnutrition'})
+    recent_gdp_spending = recent_gdp_spending.rename(columns = {'Numeric':'GDP'})
+ 
+    merg = recent_gdp_spending.merge(recent_malnutrition_data, left_on = 'COUNTRY', right_on='COUNTRY')
 
-    # needs to be merged 
     # select all values by REGION and plot y= malnutrion (data_type) and x = gdp spending, then draw line through it
 
     print('updating 4 g1')
-    
-    fig = 
+    merg = merg.rename(columns = {"REGION_x":"Region"})
+    fig = px.scatter(merg, 
+                 x='GDP', 
+                 y='Malnutrition', 
+                 color='Region',
+                 hover_data=['COUNTRY'],
+                 trendline='ols',
+                 title="Different trends in different regions",
+                 labels={'Malnutrition': '%', 
+                         'GDP': 'Domestic general government health expenditure (GGHE-D) as percentage of gross domestic product (GDP) (%)',
+                         })
+    fig.update_layout(legend_title_text='')
+    for trace in fig.data: #update legend
+        trace.name = labels_dict[trace.name]
     return fig
 
 @app.callback(
