@@ -7,6 +7,8 @@ import plotly.express as px
 from io import StringIO
 import plotly.graph_objs as go
 from iso3_dict import country_codes
+import plotly.figure_factory as ff
+import numpy as np
 
 geojson_url = "https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson"
 geojson_data = requests.get(geojson_url).json()
@@ -149,10 +151,13 @@ app.layout = html.Div([
         ),
         #row 1
         html.Div([
+            dcc.Graph(id='correlations2_section3', figure={}, style={"width": "50%", "height": "40vh"}),
             dcc.Graph(id='correlations_section3', figure={}, style={"width": "50%", "height": "40vh"}),
-            # dcc.Graph(id='plot_section2', figure={}, style={"width": "50%", "height": "40vh"}),
         # put graphs side by side
         ], style={"display": "flex"}), 
+        html.Div([
+            dcc.Graph(id='correlations3_section3', figure={}, style={"width": "50%", "height": "40vh"}),
+        ], style={"display": "flex"})
     ]),
     #section 4
     html.Div(id='section4', children=[
@@ -220,7 +225,7 @@ def update_graph(data_type):
     most_affected_region = grouped_df.loc[max_index,'REGION']
     df['YEAR'] = df['YEAR'].astype(int)
     df_region = df[df['REGION'] == most_affected_region].groupby('YEAR')['Numeric'].mean().reset_index(drop=False).sort_values(by="YEAR")
-    fig2 = px.line(df_region, x="YEAR", y="Numeric", title=f'{labels_dict[most_affected_region]} Over time', labels = {'Numeric':'%',"YEAR":'Year'})
+    fig2 = px.line(df_region, x="YEAR", y="Numeric", title=f'{labels_dict[most_affected_region]} over time', labels = {'Numeric':'%',"YEAR":'Year'})
     
     fig3 = px.box(recent_df, x='REGION' ,y="Numeric", labels = { "Numeric": "%", "REGION":''})
     fig3.update_xaxes(tickvals=list(labels_dict.keys()), ticktext= list(labels_dict.values()))
@@ -237,7 +242,12 @@ def update_graph(data_type):
 
 
 @app.callback(
-    dash.dependencies.Output('correlations_section3', 'figure'),
+    [dash.dependencies.Output('correlations_section3', 'figure'),
+     dash.dependencies.Output('correlations2_section3', 'figure'),
+     dash.dependencies.Output('correlations3_section3', 'figure'),
+
+    ],
+
     [dash.dependencies.Input('dropdown3', 'value')]
 )
 def update_graph(data_type):
@@ -270,7 +280,51 @@ def update_graph(data_type):
     fig.update_layout(legend_title_text='')
     for trace in fig.data: #update legend
         trace.name = labels_dict[trace.name]
-    return fig
+
+
+    GDP_22 = pd.read_csv('local_data/GDP_22_per_capita_usd.csv')
+    inv_map_iso3 = {v: k for k, v in country_codes.items()}
+    GDP_22['iso'] = GDP_22['Area'].apply(lambda x: inv_map_iso3.get(x,'nan'))
+    merge_2 = recent_malnutrition_data.merge(GDP_22, left_on='COUNTRY', right_on='iso')
+    # fig2 = px.density_heatmap(merge_2, x='Value', y='Malnutrition', title='Heatmap of Malnutrition vs Value')
+    merge_2 = merge_2.rename(columns ={'Value':'GDP Per Capita USD'})
+
+    # Compute the correlation matrix
+    corr_matrix = merge_2[['Malnutrition','GDP Per Capita USD']].corr()
+
+    # Create a heatmap using plotly.figure_factory
+    fig2 = ff.create_annotated_heatmap(
+        z=corr_matrix.values,
+        x=list(corr_matrix.columns),
+        y=list(corr_matrix.index),
+        annotation_text=corr_matrix.round(2).values,
+        showscale=True
+    )
+
+
+
+    fig2.update_layout(title_text='Correlation Heatmap', title_x=0.5)
+
+
+
+
+    hist, xedges, yedges = np.histogram2d(merge_2['Malnutrition'], merge_2['GDP Per Capita USD'], bins=30)
+
+    # Mask zeros
+    hist[hist == 0] = np.nan
+
+    # Create the heatmap using go.Figure
+    fig3 = go.Figure(go.Heatmap(
+        z=hist,
+        x=xedges,
+        y=yedges,
+        colorscale='Viridis',
+        hoverongaps=False
+    ))
+
+    fig3.update_layout(title='Heatmap of Malnutrition vs GDP Per Capita USD')
+
+    return fig3, fig, fig2
 
 @app.callback(
     [dash.dependencies.Output(f"btn-section{i}", "style") for i in range(1,5)],  # Outputs for each button
