@@ -227,7 +227,7 @@ def update_graph(data_type):
     most_affected_region = grouped_df.loc[max_index,'REGION']
     df['YEAR'] = df['YEAR'].astype(int)
     df_region = df[df['REGION'] == most_affected_region].groupby('YEAR')['Numeric'].mean().reset_index(drop=False).sort_values(by="YEAR")
-    fig2 = px.line(df_region, x="YEAR", y="Numeric", title=f'{labels_dict[most_affected_region]} over time', labels = {'Numeric':'%',"YEAR":'Year'})
+    fig2 = px.line(df_region, x="YEAR", y="Numeric", title=f'% in {labels_dict[most_affected_region]} over time', labels = {'Numeric':'%',"YEAR":'Year'})
     
     fig3 = px.box(recent_df, x='REGION' ,y="Numeric", labels = { "Numeric": "%", "REGION":''})
     fig3.update_xaxes(tickvals=list(labels_dict.keys()), ticktext= list(labels_dict.values()))
@@ -277,7 +277,7 @@ def update_graph(data_type):
                  color='Region',
                  hover_data=['COUNTRY'],
                  trendline='ols',
-                 title="Trends by region",
+                 title="Does more public spending on health decrease malnutrition?",
                  labels={'Malnutrition': '%', 
                          'GDP': 'Domestic general government health expenditure (GGHE-D) as percentage of gross domestic product (GDP) (%)',
                          })
