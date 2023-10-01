@@ -73,17 +73,17 @@ app.layout = html.Div([
                 'cursor': 'pointer',
                 'marginLeft': 10
             }),
-            html.Button("4. Future", id="btn-section4", n_clicks=0, style={
-                'backgroundColor': '#008CBA',  # Blue color
-                'color': 'white',
-                'border': 'none',
-                'borderRadius': '8px',
-                'padding': '10px 20px',
-                'fontSize': '16px',
-                'outline': 'none',
-                'cursor': 'pointer',
-                'marginLeft': 10
-            }),
+            # html.Button("4. Future", id="btn-section4", n_clicks=0, style={
+            #     'backgroundColor': '#008CBA',  # Blue color
+            #     'color': 'white',
+            #     'border': 'none',
+            #     'borderRadius': '8px',
+            #     'padding': '10px 20px',
+            #     'fontSize': '16px',
+            #     'outline': 'none',
+            #     'cursor': 'pointer',
+            #     'marginLeft': 10
+            # }),
 
         ], style={'display': 'flex', 'alignItems': 'center'})
     ], style={'display': 'flex', 'alignItems': 'center', 'justifyContent': 'space-between', 'padding': '0 10px', 'background-color':'black'}),
@@ -161,11 +161,11 @@ app.layout = html.Div([
 
         ], style={"display": "flex"})
     ]),
-    #section 4
-    html.Div(id='section4', children=[
-        html.H3("future",
-                style= {'padding-left':'1%'}),
-    ])
+    # #section 4
+    # html.Div(id='section4', children=[
+    #     html.H3("future",
+    #             style= {'padding-left':'1%'}),
+    # ])
 
 ], style={"width": "100%", "padding": "0"})
 
@@ -341,7 +341,7 @@ def update_graph(data_type):
                  color='Region',
                  hover_data=['COUNTRY'],
                  trendline='ols',
-                 title="Trends by region",
+                 title="How does the relative cost of a healthy diet affect malnutrition rates?",
                  labels={'Malnutrition': '%'
                         #  'GDP': 'Domestic general government health expenditure (GGHE-D) as percentage of gross domestic product (GDP) (%)',
                          })
@@ -353,8 +353,8 @@ def update_graph(data_type):
     return fig3, fig, fig2, fig4
 
 @app.callback(
-    [dash.dependencies.Output(f"btn-section{i}", "style") for i in range(1,5)],  # Outputs for each button
-    [dash.dependencies.Input(f"btn-section{i}", "n_clicks") for i in range(1,5)]  # Inputs for each button
+    [dash.dependencies.Output(f"btn-section{i}", "style") for i in range(1,4)],  # Outputs for each button
+    [dash.dependencies.Input(f"btn-section{i}", "n_clicks") for i in range(1,4)]  # Inputs for each button
 )
 def update_button_colors(*args):
     # 'args' will be a tuple of click counts for the buttons in the order btn-0, btn-1, btn-2
@@ -374,7 +374,7 @@ def update_button_colors(*args):
                 'outline': 'none',
                 'cursor': 'pointer',
                 'marginLeft': 10
-            } for color in ['red','#008CBA','#008CBA','#008CBA']]
+            } for color in ['red','#008CBA','#008CBA']]
     print(ctx.triggered)
     btn_id = ctx.triggered[0]['prop_id'].split('.')[0]
     clicked_btn_index = int(btn_id.split('-')[-1][-1])
@@ -416,29 +416,26 @@ def update_button_colors(*args):
     [dash.dependencies.Output('section1', 'style'),
      dash.dependencies.Output('section2', 'style'),
      dash.dependencies.Output('section3', 'style'),
-     dash.dependencies.Output('section4', 'style'),
      ],
     [dash.dependencies.Input('btn-section1', 'n_clicks'),
      dash.dependencies.Input('btn-section2', 'n_clicks'),
      dash.dependencies.Input('btn-section3', 'n_clicks'),
-     dash.dependencies.Input('btn-section4', 'n_clicks'),
 
      ]
 )
-def toggle_sections(btn1, btn2, btn3, btn4):
+def toggle_sections(btn1, btn2, btn3):
     ctx = dash.callback_context
     if not ctx.triggered:
-        return dict(), {'display': 'none'} ,{'display':'none'}  , {'display':'none'}
+        return dict(), {'display': 'none'} ,{'display':'none'} 
     else:
         btn_id = ctx.triggered[0]['prop_id'].split('.')[0]
         if btn_id == 'btn-section1':
-            return {'display': 'block'}, {'display': 'none'} , {'display':'none'} , {'display':'none'}
+            return {'display': 'block'}, {'display': 'none'} , {'display':'none'} 
         elif btn_id == 'btn-section2':
-            return {'display': 'none'}, {'display': 'block'} , {'display':'none'} , {'display':'none'}
+            return {'display': 'none'}, {'display': 'block'} , {'display':'none'} 
         elif btn_id == 'btn-section3':
-            return {'display': 'none'},  {'display':'none'},  {'display': 'block'}  , {'display':'none'}
-        elif btn_id == 'btn-section4':
-            return {'display': 'none'},  {'display':'none'}, {'display':'none'} , {'display': 'block'} 
+            return {'display': 'none'},  {'display':'none'},  {'display': 'block'} 
+
 
 
 
