@@ -157,6 +157,8 @@ app.layout = html.Div([
         ], style={"display": "flex"}), 
         html.Div([
             dcc.Graph(id='correlations3_section3', figure={}, style={"width": "50%", "height": "40vh"}),
+            dcc.Graph(id='correlations4_section3', figure={}, style={"width": "50%", "height": "40vh"}),
+
         ], style={"display": "flex"})
     ]),
     #section 4
@@ -245,6 +247,8 @@ def update_graph(data_type):
     [dash.dependencies.Output('correlations_section3', 'figure'),
      dash.dependencies.Output('correlations2_section3', 'figure'),
      dash.dependencies.Output('correlations3_section3', 'figure'),
+     dash.dependencies.Output('correlations4_section3', 'figure'),
+
 
     ],
 
@@ -325,8 +329,28 @@ def update_graph(data_type):
     fig3.update_layout(title='Density Heatmap of Malnutrition vs GDP Per Capita USD', 
                        xaxis_title='Malnutrition %',
                        yaxis_title='GDP Per Capita USD')
+    
 
-    return fig3, fig, fig2
+    cost_healthy_diet = pd.read_csv('local_data/cost_healthy_diet.csv')
+    cost_healthy_diet['iso'] = cost_healthy_diet['Area'].apply(lambda x: inv_map_iso3.get(x,'nan'))
+    merge_3 = recent_malnutrition_data.merge(cost_healthy_diet, left_on='COUNTRY', right_on='iso')
+    merge_3 = merge_3.rename(columns ={'Value':'Cost of healthy diet (PPP USD per person per day)', 'REGION':'Region'})
+    fig4 = px.scatter(merge_3, 
+                 x='Cost of healthy diet (PPP USD per person per day)', 
+                 y='Malnutrition', 
+                 color='Region',
+                 hover_data=['COUNTRY'],
+                 trendline='ols',
+                 title="Trends by region",
+                 labels={'Malnutrition': '%'
+                        #  'GDP': 'Domestic general government health expenditure (GGHE-D) as percentage of gross domestic product (GDP) (%)',
+                         })
+    fig4.update_layout(legend_title_text='')
+    for trace in fig4.data: #update legend
+        trace.name = labels_dict[trace.name]
+
+
+    return fig3, fig, fig2, fig4
 
 @app.callback(
     [dash.dependencies.Output(f"btn-section{i}", "style") for i in range(1,5)],  # Outputs for each button
@@ -357,7 +381,7 @@ def update_button_colors(*args):
     print(clicked_btn_index)
     # Generate the style for each button
     styles = []
-    for i in range(1,5):
+    for i in range(1,4):
         if i == clicked_btn_index:
             styles.append({
             'backgroundColor': 'red', 
